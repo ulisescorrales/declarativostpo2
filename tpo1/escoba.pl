@@ -12,6 +12,7 @@
 %Los estados del sistema se programan en escoba.pl, donde se invocan las rondas mientras se pueda seguir jugando. Los estados de una ronda se programaron en ronda.pl
 escoba(Jugadores) :-
 	%Jugadores es una lista de jugador(Nombre,WebSocket)
+	format("Jugadores: ~w~n",[Jugadores]),
 	phrase(escoba(Jugadores),[_],[_]).
 escoba(Jugadores)--> 
 	reset,
@@ -40,9 +41,10 @@ crear_jugadores(Jugadores) -->
 		same_length(Players, Jugadores),
 		%Aquí se define la estructura de player(Nombre,Baraja,Traidas,Puntaje), siendo Baraja las cartas que tiene en mano actualmente
 		%El Puntaje empieza en cero, se suma uno cuando hace una escoba mientras juega y al final del juego cuando se verifica la cantidad de cartas, oros, sietes y 7-oro que tienen los jugadores
-		maplist([jugador(Nombre,WS),X]>>(X=player(Nombre, [], [],0,WS)), Jugadores, Players),
+		% format("Jugadores entrada: ~w~n",[Jugadores]),
+		maplist([player(Nombre,WS),X]>>(X=player(Nombre, [], [],0,WS)), Jugadores, Players),
 		S = [players(Players)|S0],
-		format("Jugadores creados: ~w~n",[S])
+		format("Jugadores creados: ~w~n",[Players])
     }
 	.
 
@@ -67,7 +69,8 @@ play_rounds -->
 		length(Baraja,0),%Solo repartir cartas si no hay mas baraja de donde elegir
 		length(Stock,N1),
 		length(Players,N2),
-		N1>=N2
+		N1>=N2,
+		format("play_rounds - Players:  ~w~n",[Players])
 	},
 	repartir_tres_cartas%Reparte a jugadores, luego vuelve a invocar play_rounds
 	.
@@ -105,23 +108,15 @@ play_round([Player|Resto],CartasMesa)-->
 	%Se hace el llamado a jugar_jugador por cada Player en la lista de Players y se actualiza el nuevo estado
 	state(S0,S),
 	{
-		Player=player(Nombre,Baraja,Traidas,Puntaje,W),
-		phrase(jugar_jugador(CartasMesa,[Nombre,Baraja,Traidas,Puntaje,W],CartasMesa2,Player2),[_],_), %jugar_jugador programado en ronda.pl
-		%Se envía CartasMesa y Player como constantes
-		%CartasMesa2 y Player2 es el nuevo estado de CartasMesa y Player después de jugar la ronda
-		%Quitar el viejo estado de Player y colocar el nuevo estado de Player2
-		Player2=[Nombre2,Baraja2,Traidas2,Puntos2,W2],
+		Player=player(Nombre,Baraja,Traidas,Puntaje,WS),
+		% format("Turno para ~w~n",[Nombre]),
+		phrase(jugar_jugador(CartasMesa,[Nombre,Baraja,Traidas,Puntaje,WS],CartasMesa2,Player2),[_],_), %jugar_jugador programado en ronda.pl
+		Player2=[Nombre2,Baraja2,Traidas2,Puntos2,W],
 		select(players(PS),S0,S1),
 		select(cartasMesa(_),S1,S2),
 		select(player(Nombre,_,_,_,_),PS,PS1),
 		append(PS1,[player(Nombre2,Baraja2,Traidas2,Puntos2,_)],PS2),
 		S=[players(PS2),cartasMesa(CartasMesa2)|S2]
-
-		% select(players(Players),S0,S1),
-		% select(player(Nombre,_,_,_),Players,PlayersOld),
-		% select(cartasMesa(_),S1,S2),
-		% Player2=[Nombre2,Baraja2,Traidas2,Puntos2],
-		% S=[players([player(Nombre2,Baraja2,Traidas2,Puntos2)|PlayersOld]),cartasMesa(CartasMesa2)|S2]
 	},
 	play_round(Resto,CartasMesa2)
 	.
@@ -141,7 +136,8 @@ repartir_tres_cartas -->
 		% format("S repartiendo cartas: ~w~n",[S]),
 		member(players(Players),S),
 		member(cartasMesa(CardsTable),S),
-		format("Repartidas tres cartas a cada jugador ~n")
+		format("Repartidas tres cartas a cada jugador ~n"),
+		format("Jugadores: ~w~n",[Players])
 	},
 	play_round(Players,CardsTable). %Va recorriendo la lista de jugadores
 entregar_carta_a_cada_jugador -->
@@ -160,8 +156,8 @@ entregar_carta_a_cada_jugador -->
 repartir_cartas([], [], Cs, Cs). %Se repartieron a todos los jugadores
 repartir_cartas(Ps, Ps, [], []).%Ya no quedan cartas para repartir
 repartir_cartas([P|Ps], [P1|Ps1], [C|Cs], Cs1) :-
-    P = player(Nombre, A0,Traidas,Puntos,_), 
-    P1 = player(Nombre, [C|A0],Traidas,Puntos,_), %Agregar una carta al nuevo estado de player
+    P = player(Nombre, A0,Traidas,Puntos,WS), 
+    P1 = player(Nombre, [C|A0],Traidas,Puntos,WS), %Agregar una carta al nuevo estado de player
     repartir_cartas(Ps, Ps1, Cs, Cs1). %Seguir repartiendo
 
 calcular_puntos -->

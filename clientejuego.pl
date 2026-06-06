@@ -25,7 +25,7 @@ procesar_mensaje(Stream, Message) :-
     ;   Message.opcode == close ->
         format("Conexión cerrada por el servidor~n", [])
     ;   
-        format("Mensaje: ~w~n", [Message]),
+        format("Mensaje: ~w~n", [Message.data]),
         escuchar_mensajes(Stream)
     ).
 

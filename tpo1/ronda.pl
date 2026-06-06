@@ -20,19 +20,23 @@ card_score(_-rey,10).
 jugar_jugador(CartasMesa,Player,CartasMesa2,Player2)-->
 	%Estado de inicio para la ronde del jugador
 	{
-		Player=[Nombre,_,_,_,_],
+		Player=[Nombre,_,_,_,WS],
 		format("-------------------------------~n"),
-		format("Turno de ~w~n",[Nombre])
+		format("Turno de ~w , WS: ~w~n",[Nombre,WS]),
+		ws_send(WS,text("Tu turno"))
 	},
 	reset_jugador(CartasMesa,Player,CartasMesa2,Player2),
 	elegir_carta_baraja(CartasMesa,Player,CartasMesa2,Player2),
 	opcion_carta_baraja(CartasMesa,Player,CartasMesa2,Player2).
-reset_jugador(CartasMesa,_,_,_) -->
+reset_jugador(CartasMesa,Player,_,_) -->
 	%Estado inicial del turno del jugador
 	% state(J0,[opcionElegida(_),cartasElegidas([_])]).
 	state(_,[cartasMesa(CartasMesa),opcionElegida(_),cartaElegidaBaraja(_)]),
 	{
-		format("Cartas en la mesa disponibles: ~w~n",[CartasMesa])
+		Player=[_,_,_,_,WS],
+		format(string(Mensaje),"Cartas en la mesa disponibles: ~w~n",[CartasMesa]),
+		ws_send(WS,text(Mensaje)),
+		format("en reset_jugador~n")
 	}
 	.
 elegir_carta_baraja(_,Player,_,_)-->
