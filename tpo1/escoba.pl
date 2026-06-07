@@ -111,11 +111,11 @@ play_round([Player|Resto],CartasMesa)-->
 		Player=player(Nombre,Baraja,Traidas,Puntaje,WS),
 		% format("Turno para ~w~n",[Nombre]),
 		phrase(jugar_jugador(CartasMesa,[Nombre,Baraja,Traidas,Puntaje,WS],CartasMesa2,Player2),[_],_), %jugar_jugador programado en ronda.pl
-		Player2=[Nombre2,Baraja2,Traidas2,Puntos2,W],
+		Player2=[Nombre2,Baraja2,Traidas2,Puntos2,WS],
 		select(players(PS),S0,S1),
 		select(cartasMesa(_),S1,S2),
 		select(player(Nombre,_,_,_,_),PS,PS1),
-		append(PS1,[player(Nombre2,Baraja2,Traidas2,Puntos2,_)],PS2),
+		append(PS1,[player(Nombre2,Baraja2,Traidas2,Puntos2,WS)],PS2),
 		S=[players(PS2),cartasMesa(CartasMesa2)|S2]
 	},
 	play_round(Resto,CartasMesa2)
@@ -176,9 +176,19 @@ calcular_ganador -->
 	{
 		member(players(Players),S0),
 		ganadores(Players,R),
-		format("Ganadores: ~w~n",[R])
-	}.
-	
+		format("Ganadores: ~w~n",[R]),
+		format(string(Mensaje),"Ganadores: ~w~n",[R]),
+		format("~w~n",[Players]),
+		%Anunciar ganadores y cerrar las conexiones
+		forall(member(player(_,_,_,_,WS), Players),ws_send(WS, text(Mensaje))),
+		forall(member(player(_,_,_,_,WS), Players),ws_close(WS,1000,"Finaliza el juego")),
+		%Avisar al server que deje de ejecutar esperar_fin_juego y terminar
+    	main_thread(MainThread),
+		thread_send_message(MainThread, fin_juego),
+		thread_send_message(thread_ws, fin_juego),
+		halt
+}.
+
 ganadores(Players,R):-
 	%Recibe la lista de jugadores Players
 	%R es la lista resultante
@@ -227,9 +237,9 @@ sumar_puntos(Players,Players5):-
 sumar_punto(Players,ListaMaximos,Players3,Tipo):-
 	%Si ListaMaximos tiene un solo jugador, se le suma un punto a dicho jugador y se retorna en Players3
 	ListaMaximos=[player(Nombre,_,_,_,_)],
-	select(player(Nombre,Baraja,Traidas,Puntos,_),Players,Players2),
+	select(player(Nombre,Baraja,Traidas,Puntos,WS),Players,Players2),
 	Puntos2 is Puntos+1,
-	Players3=[player(Nombre,Baraja,Traidas,Puntos2,_)|Players2],
+	Players3=[player(Nombre,Baraja,Traidas,Puntos2,WS)|Players2],
 	imprimirPunto(Nombre,Tipo)
 	.
 sumar_punto(Players,ListaMaximos,Players,_):-
@@ -277,7 +287,7 @@ maxima_cant_aux([Player|Resto],TempCant,Max,L2,Tipo):-
 	%Verificar a la vuelta de la cadena de llamadas si TempCant2 es igual al máximo
 	verificar_maximo(TempCant2,Max,Player,Player2),
 	append(Player2,L,L2). %Si no es el maximo, Player2 es vacío y la lista no se modifica
-	
+
 maxima_cant_aux([Player|Resto],Temp,Max,L,Tipo):-
 	%Caso negativo, Temp2 no es máximo y sigue llamando sin cambios
 	cant_cartas(Player,Temp2,Tipo),
@@ -310,7 +320,7 @@ cant_cartas(Player,R,Tipo):-
 	Tipo=s,%sietes
 	Player=player(_,_,Traidas,_,_),
 	cant_sietes_aux(Traidas,0,R).
-	
+
 cant_oros_aux([Carta|Rest],Temp,R):-
 	%Contar la cantidad de oros
 	Carta=oro-_,

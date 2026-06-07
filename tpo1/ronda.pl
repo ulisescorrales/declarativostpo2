@@ -1,11 +1,16 @@
+%prolog
+%Todos los format los imprime el server y los ws_send el jugador del turno
+%Los read ahora son ws_receive
 :- use_module(library(random)).
 :- use_module(library(clpfd)).
 state(S), [S] --> [S].
 state(S0, S), [S] --> [S0].
 
 card(Suite-Number) :-
-    member(Suite, [oro,espada,copa,palo]),
-    member(Number, [rey, caballo, sota, 7, 6, 5, 4, 3, 2, as]).
+    % member(Suite, [oro,espada,copa,palo]),
+    % member(Number, [rey, caballo, sota, 7, 6, 5, 4, 3, 2, as]).
+    member(Suite, [oro,espada]),
+    member(Number, [rey, 3, 2]).
 %Nombre de cartas disponibles
 
 %Puntaje de cada carta
@@ -21,13 +26,13 @@ jugar_jugador(CartasMesa,Player,CartasMesa2,Player2)-->
 	%Estado de inicio para la ronde del jugador
 	{
 		Player=[Nombre,_,_,_,WS],
-		format("-------------------------------~n"),
 		format("Turno de ~w , WS: ~w~n",[Nombre,WS]),
 		ws_send(WS,text("Tu turno"))
 	},
 	reset_jugador(CartasMesa,Player,CartasMesa2,Player2),
 	elegir_carta_baraja(CartasMesa,Player,CartasMesa2,Player2),
-	opcion_carta_baraja(CartasMesa,Player,CartasMesa2,Player2).
+	opcion_carta_baraja(CartasMesa,Player,CartasMesa2,Player2),
+	notificar_siguiente(Player).
 reset_jugador(CartasMesa,Player,_,_) -->
 	%Estado inicial del turno del jugador
 	% state(J0,[opcionElegida(_),cartasElegidas([_])]).
@@ -35,26 +40,36 @@ reset_jugador(CartasMesa,Player,_,_) -->
 	{
 		Player=[_,_,_,_,WS],
 		format(string(Mensaje),"Cartas en la mesa disponibles: ~w~n",[CartasMesa]),
-		ws_send(WS,text(Mensaje)),
-		format("en reset_jugador~n")
+		ws_send(WS,text(Mensaje))
+		% format("en reset_jugador~n")
 	}
 	.
 elegir_carta_baraja(_,Player,_,_)-->
 	%Elegir la carta de la baraja que tiene en sus manos el jugador
 	state(J0,J),
 	{
-		Player=[_,Baraja,_,_,_],
-		format("Elige carta de la baraja: ~w~n",[Baraja]),
-		read(Opcion),
+		Player=[_,Baraja,_,_,WS],
+		format(string(Mensaje),"Eliga carta de la baraja: ~w~n",[Baraja]),
+		ws_send(WS,text(Mensaje)),
+		%forzar el read en el cliente
+		ws_send(WS,text("elegir")),
+    	ws_receive(WS, Recibido, [format(prolog)]),
+		Opcion=Recibido.data,
+		format("Opción recibida:~w~n",[Opcion]),
 		member(Opcion,Baraja),
 		select(cartaElegidaBaraja(_),J0,J1),
 		J=[cartasElegidas([Opcion]),cartaElegidaBaraja(Opcion)|J1],
-		format("Carta elegida: ~w~n",[Opcion])
+		format("Carta elegida: ~w~n",[Opcion]),
+		format(string(Mensaje2),"Carta elegida: ~w~n",[Opcion]),
+		ws_send(WS,text(Mensaje2))
 	}.
 elegir_carta_baraja(C,P,C2,P2)-->
 	%Predicado hecho en caso de elegir una carta inválida en la elección de cartas de la baraja
 	{
-		format("Carta invalida, vuelva a intentarlo~n",[])
+		P=[_,_,_,_,WS],
+		format("Carta recibida inválida~n"),
+		format(string(Mensaje),"Carta de la baraja invalida, vuelva a intentarlo~n",[]),
+		ws_send(WS,text(Mensaje))
 	},
 	elegir_carta_baraja(C,P,C2,P2).
 
@@ -62,11 +77,22 @@ opcion_carta_baraja(C,P,C2,P2) -->
 	%Mostrar mensaje de opciones después de elegir una carta de la baraja 
 	state(J0,J),
 	{
-		format("Eliga una opcion:~n"),
-		format("t para tirar~n"),
-		format("m para elegir cartas de la mesa~n"),
-		format("a para elegir otra carta de la baraja~n"),
-		read(Opcion),
+		format("Jugador elige opción~n"),
+		P=[_,_,_,_,WS],
+		format(
+			string(Msg),
+			"Elija una opcion:~n\
+			 t para tirar~n\
+			 m para elegir cartas de la mesa~n\
+			 a para elegir otra carta de la baraja",
+			[]
+		),
+		ws_send(WS, text(Msg)),
+		%Pedir el read en el cliente
+		ws_send(WS,text("elegir")),
+    	ws_receive(WS, Recibido, [format(prolog)]),
+		Opcion=Recibido.data,
+		format("Opción elegida: ~w~n",[Opcion]),
 		select(opcionElegida(_),J0,J1),
 		J=[opcionElegida(Opcion)|J1]
 	},
@@ -78,7 +104,9 @@ evaluar_opcion_elegida(C,P,C2,P2) -->
 	{
 		member(opcionElegida(Opcion),J),
 		\+ member(Opcion,[t,m,a]),
-		format("Opcion incorrecta: ~w~n",[J])
+		P=[_,_,_,_,WS],
+		format("Opcion incorrecta: ~w~n",[J]),
+		ws_send(WS,text("Opcion incorrecta, vuelva a intentarlo"))
 	},
 	opcion_carta_baraja(C,P,C2,P2)
 	.
@@ -86,7 +114,9 @@ evaluar_opcion_elegida(C,P,C2,P2) -->
 	state(J),
 	{
 		member(opcionElegida(t),J),
-		format("Opción elegida: tirar carta a la mesa~n")
+		format("Opción elegida: tirar carta a la mesa~n"),
+		P=[_,_,_,_,WS],
+		ws_send(WS,text("Opción elegida: tirar carta a la mesa"))
 	},
 	tirar_mesa(C,P,C2,P2)
 	.
@@ -95,16 +125,20 @@ evaluar_opcion_elegida(C,P,C2,P2) -->
 	{
 		member(opcionElegida(Opcion),J0),
 		Opcion = a,
-		format("Opcion elegida: abortar, ~w~n",[Opcion])
+		format("Opcion elegida: abortar, ~w~n",[Opcion]),
+		P=[_,_,_,_,WS],
+		ws_send(WS,text("Opcion elegida: abortar"))
 	},
 	jugar_jugador(C,P,C2,P2)
 	.
 evaluar_opcion_elegida(C,P,C2,P2) -->
 	state(J),
 	{
-		format("Opción elegida: agarrar cartas de la mesa~n"),
+		P=[_,_,_,_,WS],
 		member(opcionElegida(Opcion),J),
-		Opcion=m
+		Opcion=m,
+		format("Opción elegida: agarrar cartas de la mesa~n"),
+		ws_send(WS,text("Opción elegida: agarrar cartas de la mesa"))
 	},
 	elegir_cartas_mesa(C,P,C2,P2)
 	.
@@ -126,7 +160,9 @@ elegir_cartas_mesa(C,P,C2,P2)-->
 		member(cartasMesa(CartasMesa),J0),
 		length(CartasMesa,L),
 		L=0,
-		format("No hay mas cartas en la mesa para tomar y no sumaron 15. ~n")
+		P=[_,_,_,_,WS],
+		format("No hay mas cartas en la mesa para tomar y no sumaron 15. ~n"),
+		ws_send(WS,text("No hay mas cartas en la mesa para tomar y no sumaron 15. ~n"))
 	},
 	jugar_jugador(C,P,C2,P2)
 	.
@@ -136,10 +172,16 @@ elegir_cartas_mesa(C,P,C2,P2) -->
 	{
 		select(opcionElegida(_),S0,S1),
 		member(cartasMesa(CartasMesa),S1),
-		format("Elija cartas en la mesa: ~w, a para volver a elegir a elegir una carta de la baraja~n",[CartasMesa]),
-		read(CartaElegida),
+		format("Elegir carta de la mesa~n"),
+		P=[_,_,_,_,WS],
+		format(string(Mensaje),"Elija cartas en la mesa: ~w, a para volver a elegir a elegir una carta de la baraja~n",[CartasMesa]),
+		ws_send(WS,text(Mensaje)),
+		%forzar el read en el cliente
+		ws_send(WS,text("elegir")),
+    	ws_receive(WS,  Recibido, [format(prolog)]),
+		CartaElegida=Recibido.data,
+		format("Carta de la mesa elegida: ~w~n",[CartaElegida]),
 		S=[opcionElegida(CartaElegida)|S1]
-		% ,format("S: ~w~n",[S])
 	},
 	evaluar_opcion_cartas_mesa(C,P,C2,P2)
 	.
@@ -159,10 +201,12 @@ evaluar_opcion_cartas_mesa(C,P,C2,P2)-->
 	%Caso: carta elegida inexistente
 	state(J),
 	{
+		P=[_,_,_,_,WS],
 		member(opcionElegida(CartaElegida),J),
 		member(cartasMesa(CartasMesa),J),
 		\+member(CartaElegida,[a|CartasMesa]),
-		format("Opcion incorrecta, vuelva a intentarlo~n")
+		format("opción incorrecta~n"),
+		ws_send(WS,text("Opcion incorrecta, vuelva a intentarlo"))
 	},
 	elegir_cartas_mesa(C,P,C2,P2).
 evaluar_opcion_cartas_mesa(C,P,C2,P2)-->
@@ -171,7 +215,9 @@ evaluar_opcion_cartas_mesa(C,P,C2,P2)-->
 	{
 		member(opcionElegida(Opcion),J),
 		Opcion=a,
-		format("Reiniciar~n")
+		format("Reiniciar~n"),
+		P=[_,_,_,_,WS],
+		ws_send(WS,text("Reiniciar"))
 	},
 	jugar_jugador(C,P,C2,P2).
 
@@ -188,7 +234,10 @@ evaluar_sumatoria(C,P,C2,P2)-->
 		subtract(CartasMesa,[CartaElegida],CartasMesa2),
 
 		J=[cartasElegidas(TempElegidas),cartasMesa(CartasMesa2)|J2],
-		format("Las cartas eligidas suman Seguir ~w puntos. Seguir eligiendo.~n",[R])
+		P=[_,_,_,_,WS],
+		format("Seguir eligiendo~n"),
+		format(string(Mensaje),"Las cartas eligidas suman ~w puntos. Seguir eligiendo.~n",[R]),
+		ws_send(WS,text(Mensaje))
 	},
 	elegir_cartas_mesa(C,P,C2,P2)
 	.
@@ -201,7 +250,10 @@ evaluar_sumatoria(C,P,C2,P2)-->
 		member(opcionElegida(CartaElegida),J),
 		sumatoria([CartaElegida|Elegidas],R),
 		R>15,
-		format("Cartas suman mas de quince puntos: ~w, reiniciar ~n",[R])
+		format("Cartas suman mas de quince puntos: ~w, reiniciar ~n",[R]),
+		P=[_,_,_,_,WS],
+		format(string(Mensaje),"Cartas suman mas de quince puntos: ~w, reiniciar ~n",[R])
+		,ws_send(WS,text(Mensaje))
 	},
 	jugar_jugador(C,P,C2,P2)
 	.
@@ -213,8 +265,9 @@ evaluar_sumatoria(C,P,C2,P2)-->
 		member(opcionElegida(CartaElegida),J0),
 		sumatoria([CartaElegida|Elegidas],R),
 		R=15,
-		P=[Nombre,Baraja,Traidas,_,_],
+		P=[Nombre,Baraja,Traidas,_,WS],
 		format("Cartas elegidas suman 15 puntos. Termina ronda de jugador ~w~n",[Nombre]),
+		ws_send(WS,text("Cartas elegidas suma 15 puntos. Termina su ronda")),
 		select(cartasElegidas(Elegidas),J0,J1),
 
 		%Baraja restante
@@ -242,9 +295,10 @@ evaluar_escoba(_,P,_,P2)-->
 		length(CartasMesa,L),
 		L=0,
 		format("escoba!~n"),
-		P=[_,_,_,Puntos,_],
+		P=[_,_,_,Puntos,WS],
+		ws_send(WS,text("escoba!")),
 		Puntos2 is Puntos+1,
-		P2=[_,_,_,Puntos2,_]
+		P2=[_,_,_,Puntos2,WS]
 	}.
 evaluar_escoba(_,P,_,P2)-->
 	%En caso que no haya escoba
@@ -265,3 +319,10 @@ sumatoriaAux([H|T],Temp,R):-
 	Temp2 is Temp+S,
 	sumatoriaAux(T,Temp2,R).
 sumatoriaAux([],Temp,Temp).
+
+notificar_siguiente(Player) -->
+	state(S),
+	{
+		Player=[_,_,_,_,WS],
+		ws_send(WS,text("Fin de la ronda, espere su turno"))
+	}.

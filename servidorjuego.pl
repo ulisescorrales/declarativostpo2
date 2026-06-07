@@ -12,18 +12,18 @@
 :- dynamic(juego/1).
 
 main :-
+	thread_self(MainThread),
+    asserta(main_thread(MainThread)),
     http_server(http_dispatch, [port(8316)]),
     format('Servidor genérico escuchando en puerto 8316...~n', []),
     esperar_fin_juego.
 
 
 esperar_fin_juego :-
-    (   juego(terminado) ->
-        format("Servidor terminando...~n", []),
-        halt
-    ;   
-        esperar_fin_juego
-    ).
+    thread_get_message(fin_juego),
+	format("Servidor terminando...~n", []),
+	halt
+    .
 
 :- http_handler(root(ws), http_upgrade_to_websocket(procesar_player, []), [spawn([])]).
 
@@ -56,7 +56,7 @@ verificar_inicio :-
     assertz(juego(iniciado)),
     format("Iniciando juego con ~w players~n", [2]),
     forall(member(player(_, WS), Lista),
-           ws_send(WS, text("¡Juego iniciado!"))),
+    ws_send(WS, text("¡Juego iniciado!"))),
 	escoba(Lista).
 verificar_inicio :-
     players(Lista),
@@ -64,10 +64,14 @@ verificar_inicio :-
 	   %Enviar a todos los websockers el mensaje de esperando más players
 %------------------------------------------------------
 mantener_activo :-
-    (   juego(terminado) ->
-        format("Hilo terminando para websocket~n", [])
-    ;   
-	mantener_activo
-    ).
+    % (   juego(terminado) ->
+    %     format("Hilo terminando para websocket~n", [])
+    % ;   
+	% mantener_activo
+	thread_self(CurrentThread),
+    set_thread(CurrentThread, alias(thread_ws)),
+    thread_get_message(fin_juego),
+	format("Servidor terminando...~n", [])
+    .
     
 %------------------------------------------------------
