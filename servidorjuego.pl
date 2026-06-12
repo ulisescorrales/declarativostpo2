@@ -5,11 +5,22 @@
 :- use_module(library(http/thread_httpd)).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(lists), [member/2]).
-
+:- use_module(library(http/http_files)).
 :- consult('./tpo1/escoba.pl').
 
 :- dynamic(players/1).
 :- dynamic(juego/1).
+
+%------------------------Ser vir el directorio de archivos y acceder a http://localhost:8888/index.html para acceder al cliente web
+:- http_handler(root(.), http_reply_from_files('.', []), [prefix]).
+
+server(Port) :-
+    http_server(http_dispatch, [port(Port)]).
+
+serve :-
+    server(8888).
+:- serve.
+%------------------------
 
 main :-
 	thread_self(MainThread),
@@ -75,3 +86,4 @@ mantener_activo :-
     .
     
 %------------------------------------------------------
+:- main.

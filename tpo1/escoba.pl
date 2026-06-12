@@ -43,8 +43,8 @@ crear_jugadores(Jugadores) -->
 		%El Puntaje empieza en cero, se suma uno cuando hace una escoba mientras juega y al final del juego cuando se verifica la cantidad de cartas, oros, sietes y 7-oro que tienen los jugadores
 		% format("Jugadores entrada: ~w~n",[Jugadores]),
 		maplist([player(Nombre,WS),X]>>(X=player(Nombre, [], [],0,WS)), Jugadores, Players),
-		S = [players(Players)|S0],
-		format("Jugadores creados: ~w~n",[Players])
+		S = [players(Players)|S0]
+		% format("Jugadores creados: ~w~n",[Players])
     }
 	.
 
@@ -69,8 +69,8 @@ play_rounds -->
 		length(Baraja,0),%Solo repartir cartas si no hay mas baraja de donde elegir
 		length(Stock,N1),
 		length(Players,N2),
-		N1>=N2,
-		format("play_rounds - Players:  ~w~n",[Players])
+		N1>=N2
+		% format("play_rounds - Players:  ~w~n",[Players])
 	},
 	repartir_tres_cartas%Reparte a jugadores, luego vuelve a invocar play_rounds
 	.
@@ -103,9 +103,24 @@ play_rounds -->
 		format("No hay más cartas para repartir, finaliza el juego ~n")
 	}
 	.
+informarCartasMesaYJugador(PlayerNow) -->
+	state(S),
+	{
+		member(players(Players),S),
+		member(cartasMesa(CartasMesa),S),
+		%Informar cartas en la mesa
+		format(string(Mensaje),"cartas disponibles: ~w",[CartasMesa]),
+		forall(member(player(_,_,_,_,WS), Players),ws_send(WS, text(Mensaje))),
+		%Informar jugador actual
+		PlayerNow=player(Nombre,Baraja,Traidas,Puntaje,WS),
+		format(string(Mensaje2),"turno de: ~w",[Nombre]),
+		forall(member(player(_,_,_,_,WS2), Players),ws_send(WS2, text(Mensaje2)))
+	}
+.
 play_round([Player|Resto],CartasMesa)-->
 	%Comienza la ronda de juego, cada jugador elige una carta de su baraja y la tira a la mesa o intenta sumar 15 puntos y trae varias cartas a su mazo
 	%Se hace el llamado a jugar_jugador por cada Player en la lista de Players y se actualiza el nuevo estado
+	informarCartasMesaYJugador(Player),
 	state(S0,S),
 	{
 		Player=player(Nombre,Baraja,Traidas,Puntaje,WS),

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Juego de Cartas Españolas</title>
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="panelIngreso" class="panel">
+      <h2>Unirse a la partida</h2>
+
+      <input
+        type="text"
+        id="nombreJugadorInput"
+        placeholder="Ingrese su nombre"
+      />
+
+      <button onclick="unirsePartida()">Unirse a la partida</button>
+    </div>
+    <div id="contenidoJuego" style="display: none">
+      <h1>Juego de Cartas Españolas</h1>
+
+      <div class="panel">
+        <h2>Jugador</h2>
+
+        <div>
+          Conectado como:
+          <strong id="nombreJugadorMostrado"></strong>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Turno</h2>
+
+        <div>
+          Es turno de:
+          <strong id="turnoJugador">tu turno</strong>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Cartas disponibles</h2>
+
+        <div id="cartasDisponibles" class="cartas"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Baraja del jugador</h2>
+
+        <div id="barajaJugador" class="mano"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Instrucciones</h2>
+
+        <div id="contenidoInstruccion"></div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

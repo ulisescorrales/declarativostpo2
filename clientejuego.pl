@@ -40,3 +40,4 @@ procesar_mensaje(Stream, Message) :-
         format("Mensaje: ~w~n", [Message.data]),
         escuchar_mensajes(Stream)
     ).
+:- main.

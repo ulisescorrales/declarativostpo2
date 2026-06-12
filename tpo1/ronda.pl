@@ -26,7 +26,7 @@ jugar_jugador(CartasMesa,Player,CartasMesa2,Player2)-->
 	%Estado de inicio para la ronde del jugador
 	{
 		Player=[Nombre,_,_,_,WS],
-		format("Turno de ~w , WS: ~w~n",[Nombre,WS]),
+		format("Turno de ~w~n",[Nombre]),
 		ws_send(WS,text("Tu turno"))
 	},
 	reset_jugador(CartasMesa,Player,CartasMesa2,Player2),

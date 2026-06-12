@@ -1,0 +1,66 @@
+# ==========================================
+# 1. Archivos específicos de Editores y Herramientas
+# ==========================================
+# Vim (Tus tags de ctags y archivos temporales)
+tags
+tags.*
+TAGS
+*.swp
+*.swo
+.netrwhist
+
+# VS Code y JetBrains
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+
+# ==========================================
+# 2. Entornos y Secretos (¡Crucial!)
+# ==========================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ==========================================
+# 3. Build, Artefactos y Distribución
+# ==========================================
+# JavaScript / TypeScript / Bundlers
+dist/
+build/
+out/
+.next/
+.nuxt/
+.turbo/
+
+# Mobile (Expo, Android, iOS)
+.expo/
+web-build/
+ios/Pods/
+ios/.xcode.env.local
+android/.gradle/
+android/app/build/
+
+# Rust / Cargo / Java (Por el 'target' que mencionas)
+target/
+
+# ==========================================
+# 4. Dependencias y Cachés
+# ==========================================
+node_modules/
+.pnpm-store/
+.yarn/install-state.gz
+.eslintcache
+.prettiercache
+.sass-cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================================
+# 5. Sistema Operativo
+# ==========================================
+.DS_Store
+Thumbs.db
