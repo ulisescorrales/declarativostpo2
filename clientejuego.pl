@@ -25,7 +25,8 @@ procesar_mensaje(Stream, Message) :-
         ws_close(Stream, 1000, "Cliente terminando")
      ;   Message.opcode == close ->
          format("Conexión cerrada por el servidor~n", []),
-		 halt.
+        format("Mensaje: ~w~n", [Message.data]),
+		 halt
     ;   
 		Message.data =="elegir" ->
 		read(Opcion),

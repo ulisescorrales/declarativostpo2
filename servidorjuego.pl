@@ -69,7 +69,7 @@ mantener_activo :-
     % ;   
 	% mantener_activo
 	thread_self(CurrentThread),
-    set_thread(CurrentThread, alias(thread_ws)),
+    % set_thread(CurrentThread, alias(thread_ws)),
     thread_get_message(fin_juego),
 	format("Servidor terminando...~n", [])
     .
