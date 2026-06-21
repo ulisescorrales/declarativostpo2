@@ -109,7 +109,7 @@ informarCartasMesaYJugador(PlayerNow) -->
 		member(players(Players),S),
 		member(cartasMesa(CartasMesa),S),
 		%Informar cartas en la mesa
-		format(string(Mensaje),"cartas disponibles: ~w",[CartasMesa]),
+		format(string(Mensaje),"cartas en la mesa disponibles: ~w",[CartasMesa]),
 		forall(member(player(_,_,_,_,WS), Players),ws_send(WS, text(Mensaje))),
 		%Informar jugador actual
 		PlayerNow=player(Nombre,Baraja,Traidas,Puntaje,WS),

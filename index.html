@@ -1,62 +1,72 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Juego de Cartas Españolas</title>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Juego de Cartas Españolas</title>
 
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div id="panelIngreso" class="panel">
-      <h2>Unirse a la partida</h2>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<div id="estadoConexion" class="panel">
+			<h2>Conectando con el servidor...</h2>
+		</div>
+		<div id="panelIngreso" class="panel">
+			<h2>Unirse a la partida</h2>
 
-      <input
-        type="text"
-        id="nombreJugadorInput"
-        placeholder="Ingrese su nombre"
-      />
+			<input
+				type="text"
+				id="nombreJugadorInput"
+				placeholder="Ingrese su nombre"
+				autofocus
+			/>
 
-      <button onclick="unirsePartida()">Unirse a la partida</button>
-    </div>
-    <div id="contenidoJuego" style="display: none">
-      <h1>Juego de Cartas Españolas</h1>
+			<button onclick="unirsePartida()">Unirse a la partida</button>
+		</div>
+		<div id="contenidoJuego" style="display: none">
+			<h1>Juego de Cartas Españolas</h1>
 
-      <div class="panel">
-        <h2>Jugador</h2>
+			<div class="panel">
+				<h2>Jugador</h2>
 
-        <div>
-          Conectado como:
-          <strong id="nombreJugadorMostrado"></strong>
-        </div>
-      </div>
-      <div class="panel">
-        <h2>Turno</h2>
+				<div>
+					Conectado como:
+					<strong id="nombreJugadorMostrado"></strong>
+				</div>
+			</div>
+			<div class="panel">
+				<h2>Turno</h2>
 
-        <div>
-          Es turno de:
-          <strong id="turnoJugador">tu turno</strong>
-        </div>
-      </div>
+				<div>
+					Es turno de:
+					<strong id="turnoJugador">tu turno</strong>
+				</div>
+			</div>
 
-      <div class="panel">
-        <h2>Cartas disponibles</h2>
+			<div class="panel">
+				<h2>Cartas disponibles</h2>
 
-        <div id="cartasDisponibles" class="cartas"></div>
-      </div>
+				<div id="cartasDisponibles" class="cartas"></div>
+			</div>
 
-      <div class="panel">
-        <h2>Baraja del jugador</h2>
+			<div class="panel">
+				<h2>Baraja del jugador</h2>
 
-        <div id="barajaJugador" class="mano"></div>
-      </div>
+				<div id="barajaJugador" class="mano"></div>
+			</div>
 
-      <div class="panel">
-        <h2>Instrucciones</h2>
+			<div class="panel">
+				<h2>Instrucciones</h2>
 
-        <div id="contenidoInstruccion"></div>
-      </div>
-    </div>
-    <script src="script.js"></script>
-  </body>
+				<div id="contenidoInstruccion"></div>
+			</div>
+		</div>
+		<!-- <script src="./wasm/swipl-web.js" ></script> -->
+		<!-- <script src="https://cdn.jsdelivr.net/npm/tau-prolog@0.3.4/modules/core.js"></script> -->
+		<!-- <script src="https://cdn.jsdelivr.net/npm/tau-prolog@0.3.4/modules/dom.js"></script> -->
+		<h1 id="pl">HOLA</h1>
+		<script src="tau-prolog.js"></script>
+		<script src="prolog.js?version=1.3"></script>
+		<script src="script.js?version=1.8"></script>
+	</body>
 </html>

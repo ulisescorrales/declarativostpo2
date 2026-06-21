@@ -57,7 +57,8 @@ agregar_player(Nombre, WebSocket) :-
     NuevaLista = [player(Nombre, WebSocket)|Lista], %Asocia cada player a su WebSocket
     assertz(players(NuevaLista)),
     length(NuevaLista, Cant),
-    format("Jugador ~w conectado. Total: ~w~n", [Nombre, Cant]).
+    format("Jugador ~w conectado. Total: ~w~n", [Nombre, Cant]),
+	ws_send(WebSocket,text("conectado correctamente")).
 
 %------------------------------------------------------
 verificar_inicio :-
@@ -71,7 +72,7 @@ verificar_inicio :-
 	escoba(Lista).
 verificar_inicio :-
     players(Lista),
-    forall(member(player(_, WS), Lista),ws_send(WS, text("Esperando más players..."))).  
+    forall(member(player(_, WS), Lista),ws_send(WS, text("esperando más players"))).  
 	   %Enviar a todos los websockers el mensaje de esperando más players
 %------------------------------------------------------
 mantener_activo :-

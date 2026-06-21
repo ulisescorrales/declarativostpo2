@@ -25,9 +25,10 @@ card_score(_-rey,10).
 jugar_jugador(CartasMesa,Player,CartasMesa2,Player2)-->
 	%Estado de inicio para la ronde del jugador
 	{
-		Player=[Nombre,_,_,_,WS],
-		format("Turno de ~w~n",[Nombre]),
-		ws_send(WS,text("Tu turno"))
+		Player=[Nombre,CartasBaraja,_,_,WS],
+		format("turno de ~w~n",[Nombre]),
+		format(string(String),"tu turno: ~w",[CartasBaraja]),
+		ws_send(WS,text(String))
 	},
 	reset_jugador(CartasMesa,Player,CartasMesa2,Player2),
 	elegir_carta_baraja(CartasMesa,Player,CartasMesa2,Player2),
@@ -149,9 +150,11 @@ tirar_mesa(C,P,C2,P2)-->
 		member(cartasElegidas(X),J0),
 		length(X,1),
 		append(X,C,C2),
-		P=[Name,Baraja,Traidas,Puntos,_],
+		P=[Name,Baraja,Traidas,Puntos,WS],
 		subtract(Baraja,X,Baraja2),
-		P2=[Name,Baraja2,Traidas,Puntos,_]
+		P2=[Name,Baraja2,Traidas,Puntos,WS],
+		format(string(String),"su baraja: ~w",[Baraja2]),
+		ws_send(WS,text(String))
 		}.
 elegir_cartas_mesa(C,P,C2,P2)-->
 	%Si al elegir cartas de la mesa ya no quedan más, reiniciar ronda
@@ -174,8 +177,9 @@ elegir_cartas_mesa(C,P,C2,P2) -->
 		member(cartasMesa(CartasMesa),S1),
 		format("Elegir carta de la mesa~n"),
 		P=[_,_,_,_,WS],
-		format(string(Mensaje),"Elija cartas en la mesa: ~w, a para volver a elegir a elegir una carta de la baraja~n",[CartasMesa]),
+		format(string(Mensaje),"Elija cartas en la mesa: ~w",[CartasMesa]),
 		ws_send(WS,text(Mensaje)),
+		ws_send(WS,text("presione a para volver a elegir a elegir una carta de la baraja~n")),
 		%forzar el read en el cliente
 		ws_send(WS,text("elegir")),
     	ws_receive(WS,  Recibido, [format(prolog)]),
@@ -236,7 +240,7 @@ evaluar_sumatoria(C,P,C2,P2)-->
 		J=[cartasElegidas(TempElegidas),cartasMesa(CartasMesa2)|J2],
 		P=[_,_,_,_,WS],
 		format("Seguir eligiendo~n"),
-		format(string(Mensaje),"Las cartas eligidas suman ~w puntos. Seguir eligiendo.~n",[R]),
+		format(string(Mensaje),"Cartas elegidas suman ~w puntos. Seguir eligiendo.~n",[R]),
 		ws_send(WS,text(Mensaje))
 	},
 	elegir_cartas_mesa(C,P,C2,P2)
@@ -252,7 +256,7 @@ evaluar_sumatoria(C,P,C2,P2)-->
 		R>15,
 		format("Cartas suman mas de quince puntos: ~w, reiniciar ~n",[R]),
 		P=[_,_,_,_,WS],
-		format(string(Mensaje),"Cartas suman mas de quince puntos: ~w, reiniciar ~n",[R])
+		format(string(Mensaje),"Cartas elegidas suman más de quince puntos: ~w, reiniciar ~n",[R])
 		,ws_send(WS,text(Mensaje))
 	},
 	jugar_jugador(C,P,C2,P2)
@@ -267,13 +271,15 @@ evaluar_sumatoria(C,P,C2,P2)-->
 		R=15,
 		P=[Nombre,Baraja,Traidas,_,WS],
 		format("Cartas elegidas suman 15 puntos. Termina ronda de jugador ~w~n",[Nombre]),
-		ws_send(WS,text("Cartas elegidas suma 15 puntos. Termina su ronda")),
+		ws_send(WS,text("Cartas elegidas suman 15 puntos. Termina su ronda")),
 		select(cartasElegidas(Elegidas),J0,J1),
 
 		%Baraja restante
 		member(cartaElegidaBaraja(CartaBaraja),J1),
 		subtract(Baraja,[CartaBaraja],Baraja2),
-		%Traidas resultante
+		 format(string(String),"su baraja: ~w",[Baraja2]),
+		 ws_send(WS,text(String)),
+		% Traidas resultante
 		append([CartaElegida|Elegidas],Traidas,Traidas2),
 
 		%Cartas Mesa restantes
@@ -282,7 +288,7 @@ evaluar_sumatoria(C,P,C2,P2)-->
 		J=[cartasElegidas([CartaElegida|Elegidas]),cartasMesa(CartasMesa2)|J2],
 		%
 		C2=CartasMesa2,
-		P2=[Nombre,Baraja2,Traidas2,_,_] %El puntaje se evalua en el siguiente paso
+		P2=[Nombre,Baraja2,Traidas2,_,WS] %El puntaje se evalua en el siguiente paso
 
 	},
 	evaluar_escoba(C,P,C2,P2)

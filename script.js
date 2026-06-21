@@ -1,3 +1,55 @@
+//WS
+const estadoConexion = document.getElementById('estadoConexion');
+const panelIngreso = document.getElementById('panelIngreso');
+
+const socket = new WebSocket('ws://localhost:8316/ws');
+
+socket.onopen = () => {
+	console.log('WebSocket abierto');
+
+	estadoConexion.style.display = 'none';
+	panelIngreso.style.display = 'block';
+
+	// setInterval(() => {
+	// 	socket.send("s(1).");
+	// }, 500); // 30 seconds
+};
+
+socket.onmessage = (event) => {
+	console.log('server: ' + event.data);
+	if (event.data == 'elegir') {
+		return;
+	}
+	session.query("procesar_mensaje('" + event.data + "').", {
+		success: function (goal) {
+			session.answer(console.log);
+		},
+		error: function (err) {
+			console.log(event.data);
+			console.log('Error procesando mensaje:' + err);
+		}
+	});
+};
+
+socket.onerror = () => {
+	console.log('Error WebSocket');
+
+	estadoConexion.innerHTML = `
+		<h2>Error de conexión</h2>
+		<p>No fue posible conectarse al servidor WebSocket.</p>
+	`;
+
+	panelIngreso.style.display = 'none';
+};
+
+socket.onclose = () => {
+	if (panelIngreso.style.display === 'none') {
+		estadoConexion.innerHTML = `
+			<h2>Error de conexión</h2>
+			<p>La conexión WebSocket fue cerrada.</p>
+		`;
+	}
+}; //-------------------
 let cartaSeleccionada = null;
 
 /* =========================
@@ -5,63 +57,98 @@ let cartaSeleccionada = null;
    ========================= */
 
 function cargarTurno(nombreJugador) {
-  document.getElementById("turnoJugador").textContent = nombreJugador;
+	document.getElementById('turnoJugador').textContent = nombreJugador;
 
-  if (nombreJugador !== "tu turno") {
-    cargarInstruccion(["espere su turno"]);
-  } else {
-    cargarInstruccion(["Elija una carta de la baraja"]);
-  }
+	if (nombreJugador !== 'tu turno') {
+		cargarInstruccion(['espere su turno']);
+	} else {
+		cargarInstruccion(['Elija una carta de la baraja']);
+	}
 }
 /* =========================
    INSTRUCCIONES
    ========================= */
 
+function cargarInstruccion2(instrucciones) {
+	const i2 = instrucciones.split('\n');
+	cargarInstruccion(i2);
+}
+function informarGanadores(ganadores) {
+	finDelJuego(ganadores)
+}
+
 function cargarInstruccion(instrucciones) {
-  const contenedor = document.getElementById("contenidoInstruccion");
+	console.log('cargarInstruccion:');
+	console.log(instrucciones);
+	const contenedor = document.getElementById('contenidoInstruccion');
 
-  contenedor.innerHTML = "";
+	contenedor.innerHTML = '';
 
-  if (instrucciones.length === 1 && instrucciones[0] === "espere su turno") {
-    document.body.classList.add("turno-espera");
-  } else {
-    document.body.classList.remove("turno-espera");
-  }
+	if (instrucciones.length === 1 && instrucciones[0] === 'espere su turno') {
+		document.body.classList.add('turno-espera');
+	} else {
+		document.body.classList.remove('turno-espera');
+	}
 
-  if (instrucciones.length === 1) {
-    contenedor.textContent = instrucciones[0];
-  } else {
-    instrucciones.forEach((texto) => {
-      const boton = document.createElement("button");
+	if (instrucciones.length === 1) {
+		contenedor.textContent = instrucciones[0];
+	} else {
+		instrucciones.forEach((texto) => {
+			const boton = document.createElement('button');
 
-      boton.textContent = texto;
+			boton.textContent = texto;
 
-      boton.onclick = function () {
-        accionInstruccion(texto);
-      };
+			boton.value = texto[0];
 
-      contenedor.appendChild(boton);
-    });
-  }
+			boton.onclick = function () {
+				accionInstruccion(boton.value);
+			};
+
+			contenedor.appendChild(boton);
+		});
+	}
 }
 /* =========================
    CARTAS DISPONIBLES
    ========================= */
+function cargarCartasDisponiblesTurno(listaCartas) {
+	console.log('cargando cartas: ' + listaCartas);
+	let listaCartas2 = listaCartas.split(',');
+	const contenedor = document.getElementById('cartasDisponibles');
+
+	contenedor.innerHTML = '';
+
+	listaCartas2.forEach((nombre) => {
+		const carta = document.createElement('button');
+
+		carta.className = 'carta carta-disponible';
+		carta.textContent = nombre;
+
+		contenedor.appendChild(carta);
+		carta.onclick = function () {
+			seleccionarCartaBaraja(carta);
+		};
+	});
+	habilitarCartasDisponibles();
+}
 
 function cargarCartasDisponibles(listaCartas) {
-  const contenedor = document.getElementById("cartasDisponibles");
+	console.log('cargando cartas: ' + listaCartas);
+	let listaCartas2 = listaCartas.split(',');
+	const contenedor = document.getElementById('cartasDisponibles');
 
-  contenedor.innerHTML = "";
+	contenedor.innerHTML = '';
 
-  listaCartas.forEach((nombre) => {
-    const carta = document.createElement("div");
+	listaCartas2.forEach((nombre) => {
+		const carta = document.createElement('button');
 
-    carta.className = "carta carta-disponible";
+		carta.className = 'carta carta-disponible';
+		carta.disabled = true;
+		carta.textContent = nombre;
 
-    carta.textContent = nombre;
-
-    contenedor.appendChild(carta);
-  });
+		contenedor.appendChild(carta);
+	});
+	deshabilitarCartasDisponibles();
 }
 
 /* =========================
@@ -69,72 +156,113 @@ function cargarCartasDisponibles(listaCartas) {
    ========================= */
 
 function cargarCartasBaraja(listaCartas) {
-  const contenedor = document.getElementById("barajaJugador");
+	console.log('listaBarja: ' + listaCartas);
+	let listaCartas2;
+	if (listaCartas == undefined) {
+		listaCartas = [];
+	} else {
+		listaCartas2 = listaCartas.split(',');
+	}
+	const contenedor = document.getElementById('barajaJugador');
 
-  contenedor.innerHTML = "";
+	contenedor.innerHTML = '';
+	document.querySelectorAll('.seleccionada').forEach((elemento) => {
+		elemento.classList.remove('seleccionada');
+	});
 
-  listaCartas.forEach((nombre) => {
-    const carta = document.createElement("div");
+	listaCartas2.forEach((nombre) => {
+		const carta = document.createElement('div');
 
-    carta.className = "carta carta-baraja";
+		carta.className = 'carta carta-baraja';
 
-    carta.textContent = nombre;
+		carta.textContent = nombre;
 
-    carta.onclick = function () {
-      seleccionarCartaBaraja(carta);
-    };
+		carta.onclick = function () {
+			seleccionarCartaBaraja(carta);
+		};
 
-    contenedor.appendChild(carta);
-  });
+		contenedor.appendChild(carta);
+	});
 }
 
 /* =========================
    FLUJO DEL JUEGO
    ========================= */
+function pintarSeleccionBaraja(nombreCarta) {
+	console.log('pintarCartaBaraja: ' + nombreCarta);
+	const baraja = document.getElementById('barajaJugador');
+
+	// Convertimos baraja.children (que es un HTMLCollection) en un array para iterar cómodamente
+	for (const elemento of baraja.children) {
+		// Comparamos el innerHTML del hijo con el nombreCarta recibido por parámetro
+		if (elemento.innerHTML.trim() === nombreCarta) {
+			// Si coincide, le añadimos la clase
+			elemento.classList.add('seleccionada');
+
+			break; // Rompemos el bucle ya que encontramos la carta
+		}
+	}
+}
+function habilitarCartasDisponibles() {
+	document.querySelectorAll('.carta-disponible').forEach((carta) => {
+		carta.style.cursor = 'pointer';
+		carta.disabled = false;
+	});
+}
+function deshabilitarCartasDisponibles() {
+	document.querySelectorAll('.carta-disponible').forEach((carta) => {
+		carta.style.cursor = 'not-allowed';
+		carta.disabled = true;
+	});
+}
+function finDelJuego(ganadores) {
+	const instrucciones = document.getElementById('contenidoInstruccion');
+	instrucciones.innerHTML="<h1>Fin del juego. "+ganadores+"</h1>"
+}
+function mostrarPuntos(puntos2) {
+	const instrucciones = document.getElementById('contenidoInstruccion');
+	const puntosDiv=document.getElementById('puntos');
+	if (instrucciones && !puntosDiv) {
+		const puntos = document.createElement('div');
+		puntos.id = 'puntos';
+		puntos.innerText=puntos2
+		instrucciones.appendChild(puntos)
+		// instrucciones.parentNode.insertBefore(puntos, instrucciones);
+	}else{
+		puntosDiv.innerText=puntos2
+	}
+}
 
 function seleccionarCartaBaraja(elemento) {
-  if (cartaSeleccionada !== null) {
-    return;
-  }
+	console.log('seleccionar: ' + elemento);
 
-  cartaSeleccionada = elemento;
+	cartaSeleccionada = elemento;
 
-  elemento.classList.add("seleccionada");
+	elemento.classList.add('seleccionada');
 
-  cargarInstruccion([
-    "Tirar",
-    "Combinar con cartas disponibles",
-    "Elegir otra carta de la baraja",
-  ]);
+	console.log(elemento.innerHTML);
+	socket.send(elemento.innerHTML + '.');
 }
 
 function elegirOtraCarta() {
-  if (cartaSeleccionada) {
-    cartaSeleccionada.classList.remove("seleccionada");
-  }
+	if (cartaSeleccionada) {
+		cartaSeleccionada.classList.remove('seleccionada');
+	}
 
-  cartaSeleccionada = null;
+	cartaSeleccionada = null;
 
-  cargarInstruccion(["Elija una carta de la baraja"]);
+	cargarInstruccion(['Elija una carta de la baraja']);
 }
 
 function accionInstruccion(accion) {
-  switch (accion) {
-    case "Tirar":
-      alert("Tirar carta: " + cartaSeleccionada.textContent);
-
-      break;
-
-    case "Combinar con cartas disponibles":
-      alert("Combinar carta: " + cartaSeleccionada.textContent);
-
-      break;
-
-    case "Elegir otra carta de la baraja":
-      elegirOtraCarta();
-
-      break;
-  }
+	let enviar = accion + '.';
+	socket.send(enviar);
+	if (accion == 'm') {
+		const div = document.getElementById('contenidoInstruccion');
+		div.removeChild(div.children[0]);
+		div.removeChild(div.children[0]);
+		deshabilitarCartasDisponibles();
+	}
 }
 
 /* =========================
@@ -142,51 +270,54 @@ function accionInstruccion(accion) {
    ========================= */
 
 window.onload = function () {
-  cargarTurno("tu turno");
-
-  cargarCartasDisponibles(["oro-5", "copa-7", "espada-1", "basto-12"]);
-
-  cargarCartasBaraja(["oro-3", "espada-6", "copa-10"]);
-
-  cargarInstruccion(["Elija una carta de la baraja"]);
+	// cargarTurno('tu turno');
+	// cargarCartasDisponibles(['oro-5', 'copa-7', 'espada-1', 'basto-12']);
+	// cargarCartasBaraja(['oro-3', 'espada-6', 'copa-10']);
+	// cargarInstruccion(['Elija una carta de la baraja']);
 };
 let nombreJugador = null;
 
 function unirsePartida() {
-  const input = document.getElementById("nombreJugadorInput");
+	const input = document.getElementById('nombreJugadorInput');
 
-  const nombre = input.value.trim();
+	const nombre = input.value.trim();
 
-  if (nombre === "") {
-    alert("Debe ingresar un nombre.");
+	if (nombre === '') {
+		alert('Debe ingresar un nombre.');
 
-    return;
-  }
+		return;
+	}
 
-  nombreJugador = nombre;
+	nombreJugador = nombre;
 
-  document.getElementById("nombreJugadorMostrado").textContent = nombreJugador;
+	if (socket.readyState !== WebSocket.OPEN) {
+		alert('No hay conexión con el servidor.');
+		return;
+	}
 
-  document.getElementById("panelIngreso").style.display = "none";
+	nombreJugador = nombre;
 
-  document.getElementById("contenidoJuego").style.display = "block";
+	let unirseText = 'join(' + nombre + ').';
+	socket.send(unirseText);
+}
+function esperarInicio() {
+	document.getElementById('nombreJugadorMostrado').textContent =
+		nombreJugador;
 
-  console.log("Jugador unido:", nombreJugador);
+	document.getElementById('panelIngreso').style.display = 'none';
+
+	document.getElementById('panelIngreso').style.display = 'none';
+	document.getElementById('contenidoJuego').style.display = 'block';
+	cargarTurno('Esperando jugadores');
 }
 
+const inputCodigo = document.getElementById('nombreJugadorInput');
 
-const socket = new WebSocket("ws://localhost:8316/ws");
-
-// Connection opened
-socket.addEventListener("open", (event) => {
-  socket.send("Hello Server!");
-  console.log("Send");
-});
-
-// Listen for messages
-socket.addEventListener("message", (event) => {
-  console.log("Message from server ", event.data);
-});
-socket.addEventListener("error", (event) => {
-  console.log("Error WebSocket", event.data);
+// 2. Escuchamos el evento 'keydown' (tecla presionada)
+inputCodigo.addEventListener('keydown', function (event) {
+	// 3. Verificamos si la tecla presionada es 'Enter'
+	if (event.key === 'Enter') {
+		event.preventDefault(); // Evita que la página se recargue si está dentro de un <form>
+		unirsePartida(); // Ejecutamos tu función
+	}
 });
