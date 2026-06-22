@@ -13,7 +13,7 @@ seq_opcion([E|Es]) --> [E], {
 
 opciones([Opcion]) -->seq_opcion(Opcion).
 opciones([Opcion|Resto])-->seq_opcion(Opcion),`\n`,opciones(Resto).
-mensaje_opciones(Opciones) -->`Elija una opcion:\n`,opciones(Opciones).
+mensaje_opciones(Opciones) -->`Eliga una opcion (responda solo con la letra):\n`,opciones(Opciones).
 
 seq([E]) --> [E].
 seq([E|Es]) --> [E], {
@@ -27,7 +27,7 @@ cartas([Carta])-->seq(Carta).
 cartas([Carta|Resto])-->seq(Carta),`,`,cartas(Resto).
 % mensaje_cartas(Cartas) -->`Cartas en la mesa disponibles: [`,cartas(Cartas).
 mensaje_cartas(Cartas) -->`cartas en la mesa disponibles: [`,cartas(Cartas),`]`,([];`\n`).
-mensaje_cartas_turno(Cartas) -->`Elija cartas en la mesa: [`,cartas(Cartas),`]`.
+mensaje_cartas_turno(Cartas) -->`Eliga carta en la mesa para combinar (indique palo-numero): [`,cartas(Cartas),`]`.
 
 mensaje_baraja(Cartas) -->`tu turno: [`,cartas(Cartas),`]`.
 mensaje_baraja2(Cartas) -->`su baraja: [`,cartas(Cartas),`]`.

@@ -156,7 +156,6 @@ function cargarCartasDisponibles(listaCartas) {
    ========================= */
 
 function cargarCartasBaraja(listaCartas) {
-	console.log('listaBarja: ' + listaCartas);
 	let listaCartas2;
 	if (listaCartas == undefined) {
 		listaCartas = [];
@@ -226,8 +225,8 @@ function mostrarPuntos(puntos2) {
 		const puntos = document.createElement('div');
 		puntos.id = 'puntos';
 		puntos.innerText=puntos2
-		instrucciones.appendChild(puntos)
-		// instrucciones.parentNode.insertBefore(puntos, instrucciones);
+		// instrucciones.appendChild(puntos)
+		instrucciones.parentNode.insertBefore(puntos, instrucciones);
 	}else{
 		puntosDiv.innerText=puntos2
 	}

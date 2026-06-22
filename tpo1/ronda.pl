@@ -50,7 +50,7 @@ elegir_carta_baraja(_,Player,_,_)-->
 	state(J0,J),
 	{
 		Player=[_,Baraja,_,_,WS],
-		format(string(Mensaje),"Eliga carta de la baraja: ~w~n",[Baraja]),
+		format(string(Mensaje),"Eliga carta de la baraja (indique palo-numero): ~w~n",[Baraja]),
 		ws_send(WS,text(Mensaje)),
 		%forzar el read en el cliente
 		ws_send(WS,text("elegir")),
@@ -82,10 +82,10 @@ opcion_carta_baraja(C,P,C2,P2) -->
 		P=[_,_,_,_,WS],
 		format(
 			string(Msg),
-			"Elija una opcion:~n\
+			"Eliga una opcion (responda solo con la letra):~n\
 			 t para tirar~n\
-			 m para elegir cartas de la mesa~n\
-			 a para elegir otra carta de la baraja",
+			 m para combinar con cartas de la mesa~n\
+			 a para descartar carta actual y elegir otra carta de la baraja",
 			[]
 		),
 		ws_send(WS, text(Msg)),
@@ -177,7 +177,7 @@ elegir_cartas_mesa(C,P,C2,P2) -->
 		member(cartasMesa(CartasMesa),S1),
 		format("Elegir carta de la mesa~n"),
 		P=[_,_,_,_,WS],
-		format(string(Mensaje),"Elija cartas en la mesa: ~w",[CartasMesa]),
+		format(string(Mensaje),"Eliga carta en la mesa para combinar (indique palo-numero): ~w",[CartasMesa]),
 		ws_send(WS,text(Mensaje)),
 		ws_send(WS,text("presione a para volver a elegir a elegir una carta de la baraja~n")),
 		%forzar el read en el cliente
